@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-safety-core"
-version = "0.1.0"
+version = "0.1.1"
 description = "Single-source confirm-gating, structured-error (SERF), and tool-safety primitives shared across the revelri MCP portfolio."
 readme = "README.md"
 requires-python = ">=3.11"

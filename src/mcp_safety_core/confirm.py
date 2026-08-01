@@ -18,8 +18,10 @@ from pydantic import BaseModel
 F = TypeVar("F", bound=Callable[..., Any])
 
 # Parameter names checked (in order) to summarize the target of a previewed
-# action. First non-empty string wins; falls back to "<unknown>".
-_TARGET_PARAMS = (
+# action. First non-empty string wins; falls back to "<unknown>". Consumers with
+# domain-specific params (e.g. shodan's ``ips``/``alert_id``, apk-lab's
+# ``serial``) pass an explicit ``target_params=`` tuple to :func:`confirm_required`.
+_DEFAULT_TARGET_PARAMS = (
     "slug",
     "game_id",
     "path",
@@ -46,8 +48,8 @@ class Preview(BaseModel):
     note: str = "Pass confirm=True to execute."
 
 
-def _resolve_target(bound: inspect.BoundArguments) -> str:
-    for key in _TARGET_PARAMS:
+def _resolve_target(bound: inspect.BoundArguments, target_params: tuple[str, ...]) -> str:
+    for key in target_params:
         if key in bound.arguments:
             value = bound.arguments[key]
             if value is None:
@@ -62,6 +64,8 @@ def _resolve_target(bound: inspect.BoundArguments) -> str:
 def confirm_required(
     action: str,
     describe: Callable[[dict[str, Any]], str | None] | None = None,
+    *,
+    target_params: tuple[str, ...] = _DEFAULT_TARGET_PARAMS,
 ) -> Callable[[F], F]:
     """Gate a mutating tool behind ``confirm=True``.
 
@@ -70,6 +74,11 @@ def confirm_required(
     used as the preview's ``would_do`` so the agent can show the caller what
     the action will actually do. Best-effort: any exception falls back to the
     generic ``<action> on <target>`` text.
+
+    ``target_params`` selects which bound arguments (in order) summarize the
+    preview ``target``; pass the consumer's domain-specific names (e.g. shodan's
+    ``("query", "ips", "alert_id")``) so deduplicated copies resolve the same
+    target they did before.
     """
 
     def decorator(fn: F) -> F:
@@ -84,7 +93,7 @@ def confirm_required(
                 return fn(*args, **kwargs)
             bound.apply_defaults()
             if not bool(bound.arguments.get("confirm", False)):
-                target = _resolve_target(bound)
+                target = _resolve_target(bound, target_params)
                 would_do = f"{action} on {target}"
                 if describe is not None:
                     try:

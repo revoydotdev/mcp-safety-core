@@ -122,3 +122,18 @@ def test_mutates_and_action_markers_set() -> None:
 
     assert op.__mutates__ is True  # type: ignore[attr-defined]
     assert op.__action__ == "wipe"  # type: ignore[attr-defined]
+
+
+def test_confirm_accepts_custom_target_params() -> None:
+    @confirm_required("scan", target_params=("ips", "alert_id", "out_dir"))
+    def op(ips: str = "", alert_id: str = "", confirm: bool = False) -> dict[str, Any]:
+        return {"ok": True}
+
+    # "ips" is not in the default param list; without target_params this would be <unknown>
+    preview = op(ips="1.2.3.4")
+    assert isinstance(preview, Preview)
+    assert preview.target == "1.2.3.4"
+
+    preview2 = op(ips="", alert_id="alert-99")
+    assert isinstance(preview2, Preview)
+    assert preview2.target == "alert-99"
