@@ -5,9 +5,11 @@ preview→confirm gating for destructive tools, a SERF-aligned structured-error
 envelope, and tool-safety helpers (read-only filtering + annotations).
 
 This library exists to **deduplicate** a pattern that was independently
-copied into `lutris-mcp`, `nicotine-mcp`, `shodan-mcp`, and `apk-lab-mcp`.
-Consumers depend on a published version of this package rather than shipping
-their own copy.
+copied into four sibling MCP servers (`lutris-mcp`, `nicotine-mcp`,
+`shodan-mcp`, `apk-lab-mcp`). `shodan-mcp` and `apk-lab-mcp` have migrated to
+depend on the published package rather than shipping their own copy;
+`lutris-mcp` and `nicotine-mcp` still carry their original local copies
+pending migration.
 
 ## Install
 
